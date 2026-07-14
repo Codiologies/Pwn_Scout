@@ -1,23 +1,26 @@
-# Scout
+# 🕵️‍♂️ Scout
 
-> Autonomous Attack Surface Intelligence Platform
-
-Dark terminal UI meets professional recon engine. Built for pentesters, bug bounty hunters, and security engineers.
-
----
-
-## Features
-
-- **DNS Enumeration** — A/AAAA/MX/NS/TXT/SOA/CAA records, subdomain bruteforce (50+ prefixes), SPF/DMARC/DKIM, zone transfer check
-- **TLS Analysis** — Full cert chain, protocol/cipher grading (A–F), expiry countdown, SAN enumeration
-- **HTTP Fingerprinting** — Tech stack detection, WAF identification, open redirect testing, response timing
-- **Security Headers** — 10 OWASP headers checked, CSP analysis, one-click nginx/Apache remediation config
-- **Risk Scoring** — CVSS-inspired 0–100 score, severity-sorted findings with remediation guidance
-- **AI Analysis** — Ollama (local LLM) with rule-based fallback engine, interactive pentest assistant chat
+<p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000" />
+  <img src="https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/Node.js-43853D?style=flat&logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-B73BFE?style=flat&logo=vite&logoColor=FFD62E" />
+</p>
 
 ---
 
-## Quick Start
+## ✨ Features
+
+- 🌍 **DNS Enumeration** — A/AAAA/MX/NS/TXT/SOA/CAA records, subdomain bruteforce (50+ prefixes), SPF/DMARC/DKIM, zone transfer check
+- 🔒 **TLS Analysis** — Full cert chain, protocol/cipher grading (A–F), expiry countdown, SAN enumeration
+- 🌐 **HTTP Fingerprinting** — Tech stack detection, WAF identification, open redirect testing, response timing
+- 🛡️ **Security Headers** — 10 OWASP headers checked, CSP analysis, one-click nginx/Apache remediation config
+- 📊 **Risk Scoring** — CVSS-inspired 0–100 score, severity-sorted findings with remediation guidance
+- 🤖 **AI Analysis** — Ollama (local LLM) with rule-based fallback engine, interactive pentest assistant chat
+
+---
+
+## 🚀 Quick Start
 
 ```bash
 # Install everything
@@ -33,12 +36,12 @@ cd frontend && npm run dev
 ollama pull llama3.2 && ollama serve
 ```
 
-Frontend: http://localhost:5173  
-Backend: http://localhost:3001
+🔗 **Frontend:** http://localhost:5173  
+🔗 **Backend:** http://localhost:3001
 
 ---
 
-## Ollama Setup (Optional)
+## 🦙 Ollama Setup (Optional)
 
 ```bash
 # Install Ollama
@@ -51,11 +54,11 @@ ollama pull llama3.2
 ollama serve
 ```
 
-Without Ollama, the built-in rule-based engine handles all AI analysis automatically.
+> 💡 **Note:** Without Ollama, the built-in rule-based engine handles all AI analysis automatically.
 
 ---
 
-## Deploy
+## ☁️ Deploy
 
 ### Frontend → Vercel
 
@@ -64,7 +67,7 @@ cd frontend
 npx vercel --prod
 ```
 
-Set env var: `VITE_API_URL=https://your-backend.railway.app`
+🔑 **Set env var:** `VITE_API_URL=https://your-backend.railway.app`
 
 ### Backend → Railway
 
@@ -74,7 +77,7 @@ Set env var: `VITE_API_URL=https://your-backend.railway.app`
 
 ---
 
-## Environment Variables
+## ⚙️ Environment Variables
 
 Copy `.env.example` to `.env` in each directory:
 
@@ -84,13 +87,13 @@ Copy `.env.example` to `.env` in each directory:
 | `FRONTEND_URL` | `*` | CORS allowed origin |
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama endpoint |
 | `OLLAMA_MODEL` | `llama3.2` | Default model |
-| `VITE_API_URL` | `` (empty) | Backend URL for frontend |
+| `VITE_API_URL` | *(empty)* | Backend URL for frontend |
 
 ---
 
-## Architecture
+## 🏗️ Architecture
 
-```
+```text
 scout/
 ├── backend/
 │   └── src/
@@ -115,17 +118,17 @@ scout/
 
 ---
 
-## API Reference
+## 🔌 API Reference
 
-```
+```http
 POST /api/recon
-  Body: { target: "example.com", modules: ["dns","tls","http","headers"] }
+Body: { "target": "example.com", "modules": ["dns","tls","http","headers"] }
 
 POST /api/ai/analyze
-  Body: { reconData: {...}, domain: "example.com", model: "llama3.2" }
+Body: { "reconData": {...}, "domain": "example.com", "model": "llama3.2" }
 
 POST /api/ai/chat
-  Body: { message: "string", context: { domain, riskScore } }
+Body: { "message": "string", "context": { "domain": "example.com", "riskScore": 85 } }
 
 GET  /api/ai/status
 GET  /health
@@ -133,10 +136,10 @@ GET  /health
 
 ---
 
-## Keyboard Shortcuts
+## ⌨️ Keyboard Shortcuts
 
-- `⌘K` / `Ctrl+K` — Focus scan input
+- <kbd>⌘</kbd> <kbd>K</kbd> / <kbd>Ctrl</kbd> <kbd>K</kbd> — Focus scan input
 
 ---
 
-*Ethical use only. Only scan domains you own or have explicit permission to test.*
+> ⚠️ **Disclaimer:** Ethical use only. Only scan domains you own or have explicit permission to test.
