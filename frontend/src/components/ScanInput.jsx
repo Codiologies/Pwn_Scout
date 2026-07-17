@@ -55,7 +55,7 @@ export function ScanInput({ onScan, scanning }) {
           transition={{ duration: 0.15 }}
         >
           <div
-            className="flex items-center gap-3 rounded-lg px-4 py-3"
+            className="flex items-center gap-2 sm:gap-3 rounded-lg px-3 sm:px-4 py-3"
             style={{
               background: '#0D1117',
               border: `1px solid ${focused ? 'rgba(0,255,136,0.5)' : '#1C2333'}`,
@@ -63,7 +63,7 @@ export function ScanInput({ onScan, scanning }) {
               transition: 'border-color 0.2s, box-shadow 0.2s'
             }}
           >
-            <span className="text-green font-mono text-lg select-none flex-shrink-0 text-glow-green">&gt;_</span>
+            <span className="text-green font-mono text-base sm:text-lg select-none flex-shrink-0 text-glow-green">&gt;_</span>
             <input
               ref={inputRef}
               type="text"
@@ -73,8 +73,8 @@ export function ScanInput({ onScan, scanning }) {
               onBlur={() => setFocused(false)}
               placeholder={`scan ${EXAMPLE_TARGETS[ghostIdx]}`}
               disabled={scanning}
-              className="flex-1 bg-transparent font-mono text-lg text-text-primary placeholder-text-muted/40 focus:outline-none disabled:opacity-50"
-              style={{ fontSize: '1.1rem', letterSpacing: '0.02em' }}
+              className="flex-1 min-w-0 bg-transparent font-mono text-base sm:text-lg text-text-primary placeholder-text-muted/40 focus:outline-none disabled:opacity-50"
+              style={{ letterSpacing: '0.02em' }}
               autoComplete="off"
               spellCheck={false}
             />
@@ -85,7 +85,7 @@ export function ScanInput({ onScan, scanning }) {
                 disabled={!target.trim() || scanning}
                 whileHover={!scanning && target ? { scale: 1.02 } : {}}
                 whileTap={!scanning && target ? { scale: 0.98 } : {}}
-                className="px-5 py-2 rounded font-mono font-semibold text-sm tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="px-3 sm:px-5 py-2 rounded font-mono font-semibold text-xs sm:text-sm tracking-wider sm:tracking-widest uppercase whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed transition-all"
                 style={{
                   background: scanning
                     ? 'rgba(0,255,136,0.1)'
@@ -102,15 +102,20 @@ export function ScanInput({ onScan, scanning }) {
                     <span className="inline-block w-2 h-2 rounded-full bg-green animate-pulse" />
                     SCANNING
                   </span>
-                ) : 'INITIALIZE SCAN'}
+                ) : (
+                  <>
+                    <span className="sm:hidden">SCAN</span>
+                    <span className="hidden sm:inline">INITIALIZE SCAN</span>
+                  </>
+                )}
               </motion.button>
             </div>
           </div>
         </motion.div>
 
         {/* Module toggles */}
-        <div className="flex items-center gap-2 mt-3 flex-wrap">
-          <span className="text-text-muted text-xs font-mono mr-1">MODULES:</span>
+        <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-3 flex-wrap">
+          <span className="text-text-muted text-xs font-mono mr-1 hidden sm:block">MODULES:</span>
           {MODULES.map(mod => {
             const active = selectedModules.includes(mod.id);
             return (
@@ -120,7 +125,7 @@ export function ScanInput({ onScan, scanning }) {
                 onClick={() => toggleModule(mod.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-3 py-1 rounded text-xs font-mono transition-all"
+                className="px-2.5 sm:px-3 py-1 rounded text-xs font-mono transition-all"
                 style={{
                   background: active ? 'rgba(0,255,136,0.1)' : 'rgba(28,35,51,0.5)',
                   color: active ? '#00FF88' : '#7D8590',

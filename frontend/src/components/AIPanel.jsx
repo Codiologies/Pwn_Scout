@@ -138,7 +138,7 @@ export function AIPanel({ open, onClose, aiState, analysis, analysisLoading, mes
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 right-0 h-full w-96 flex flex-col z-40"
+          className="fixed top-0 right-0 h-full w-full sm:w-96 max-w-full flex flex-col z-40"
           style={{ background: '#0D1117', borderLeft: '1px solid #1C2333' }}
         >
           {/* Header */}

@@ -90,13 +90,13 @@ export function ResultGrid({ result, onAIAnalyze }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between gap-3 flex-wrap"
       >
-        <div>
-          <h2 className="font-display font-bold text-xl text-text-primary">{domain}</h2>
+        <div className="min-w-0">
+          <h2 className="font-display font-bold text-xl text-text-primary break-all">{domain}</h2>
           <div className="font-mono text-xs text-text-muted">Scan complete · {new Date(result.timestamp).toLocaleTimeString()}</div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -127,10 +127,10 @@ export function ResultGrid({ result, onAIAnalyze }) {
         </div>
       </motion.div>
 
-      {/* Two-column layout: left = data cards, right = risk */}
-      <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 320px' }}>
+      {/* Two-column layout: left = data cards, right = risk (stacks on mobile) */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* Left column */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {modules.dns && <DNSCard dns={modules.dns} />}
           {modules.dns?.subdomains?.length > 0 && <SubdomainCard dns={modules.dns} />}
           {modules.tls && <TLSCard tls={modules.tls} />}
@@ -139,9 +139,9 @@ export function ResultGrid({ result, onAIAnalyze }) {
           {modules.ports && <PortsCard ports={modules.ports} />}
         </div>
 
-        {/* Right column — Risk score (sticky) */}
-        <div>
-          <div className="sticky top-0">
+        {/* Right column — Risk score (sticky on desktop, shown first on mobile) */}
+        <div className="order-first lg:order-none">
+          <div className="lg:sticky lg:top-0">
             <RiskCard risk={risk} />
           </div>
         </div>

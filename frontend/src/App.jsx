@@ -19,7 +19,7 @@ function Header({ domain, status, aiState, onAIToggle, aiPanelOpen }) {
 
   return (
     <header
-      className="relative flex-shrink-0 flex items-center justify-between px-6 py-3 scanlines"
+      className="relative flex-shrink-0 flex items-center justify-between gap-2 px-4 sm:px-6 py-3 scanlines"
       style={{
         background: 'linear-gradient(180deg, #0D1117 0%, rgba(13,17,23,0.95) 100%)',
         borderBottom: '1px solid #1C2333',
@@ -70,20 +70,21 @@ function Header({ domain, status, aiState, onAIToggle, aiPanelOpen }) {
 
 function HeroScreen({ onScan, scanning }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-8 relative">
+    <div className="flex-1 relative overflow-y-auto scrollable">
       {/* Grid background */}
       <div className="absolute inset-0 grid-bg pointer-events-none" />
 
+      <div className="min-h-full flex flex-col items-center justify-center gap-8 py-8 px-2">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="text-center relative z-10"
       >
-        <div className="font-display font-black text-5xl tracking-tight text-text-primary mb-2">
+        <div className="font-display font-black text-4xl sm:text-5xl tracking-tight text-text-primary mb-2">
           PWN<span style={{ color: '#00FF88' }}>SCOUT</span>
         </div>
-        <div className="font-mono text-sm text-text-muted tracking-widest">
+        <div className="font-mono text-xs sm:text-sm text-text-muted tracking-widest px-4">
           AUTONOMOUS ATTACK SURFACE INTELLIGENCE
         </div>
       </motion.div>
@@ -101,7 +102,7 @@ function HeroScreen({ onScan, scanning }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="flex gap-6 font-mono text-xs text-text-muted relative z-10"
+        className="flex flex-wrap justify-center gap-x-5 gap-y-2 px-4 font-mono text-xs text-text-muted relative z-10"
       >
         {['DNS Enumeration', 'TLS Analysis', 'HTTP Fingerprinting', 'Security Headers', 'AI Analysis'].map((f, i) => (
           <span key={i} className="flex items-center gap-1.5">
@@ -109,6 +110,7 @@ function HeroScreen({ onScan, scanning }) {
           </span>
         ))}
       </motion.div>
+      </div>
     </div>
   );
 }
