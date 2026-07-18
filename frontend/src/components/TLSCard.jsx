@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion';
+import { HUDPanel, Readout, ACCENT } from './ui/HUDPanel';
 
 const GRADE_CONFIG = {
-  A: { color: '#00FF88', bg: 'rgba(0,255,136,0.1)', border: 'rgba(0,255,136,0.4)', glow: '0 0 30px rgba(0,255,136,0.3)' },
-  B: { color: '#4D9FFF', bg: 'rgba(77,159,255,0.1)', border: 'rgba(77,159,255,0.4)', glow: '0 0 30px rgba(77,159,255,0.2)' },
-  C: { color: '#FFB800', bg: 'rgba(255,184,0,0.1)', border: 'rgba(255,184,0,0.4)', glow: '0 0 30px rgba(255,184,0,0.2)' },
-  D: { color: '#FF6432', bg: 'rgba(255,100,50,0.1)', border: 'rgba(255,100,50,0.4)', glow: '0 0 30px rgba(255,100,50,0.2)' },
-  F: { color: '#FF4444', bg: 'rgba(255,68,68,0.1)', border: 'rgba(255,68,68,0.4)', glow: '0 0 30px rgba(255,68,68,0.3)' }
+  A: { color: '#00E08A', bg: 'rgba(0,224,138,0.1)', border: 'rgba(0,224,138,0.5)', glow: '0 0 28px rgba(0,224,138,0.35)' },
+  B: { color: '#4D9FFF', bg: 'rgba(77,159,255,0.1)', border: 'rgba(77,159,255,0.5)', glow: '0 0 28px rgba(77,159,255,0.25)' },
+  C: { color: '#FFA31A', bg: 'rgba(255,163,26,0.1)', border: 'rgba(255,163,26,0.5)', glow: '0 0 28px rgba(255,163,26,0.25)' },
+  D: { color: '#FF6B2C', bg: 'rgba(255,107,44,0.1)', border: 'rgba(255,107,44,0.5)', glow: '0 0 28px rgba(255,107,44,0.25)' },
+  F: { color: '#FF3355', bg: 'rgba(255,51,85,0.1)', border: 'rgba(255,51,85,0.5)', glow: '0 0 28px rgba(255,51,85,0.35)' }
 };
 
 function ValidityBar({ cert }) {
@@ -16,28 +17,19 @@ function ValidityBar({ cert }) {
   const total = to - from;
   const elapsed = now - from;
   const pct = Math.max(0, Math.min(100, (elapsed / total) * 100));
-  const expired = cert.expired;
-  const soon = cert.expiringSoon;
-
-  const barColor = expired ? '#FF4444' : soon ? '#FFB800' : '#00FF88';
+  const barColor = cert.expired ? '#FF3355' : cert.expiringSoon ? '#FFA31A' : '#00E08A';
 
   return (
     <div className="space-y-1">
-      <div className="flex justify-between font-mono text-xs text-text-muted">
-        <span>{new Date(cert.validFrom).toLocaleDateString()}</span>
-        <span style={{ color: expired ? '#FF4444' : soon ? '#FFB800' : '#00CC6A' }}>
-          {expired ? `Expired ${Math.abs(cert.daysRemaining)}d ago` : `${cert.daysRemaining}d left`}
+      <div className="flex justify-between gap-2 font-mono text-xs" style={{ color: '#6B8199' }}>
+        <span>{from.toLocaleDateString()}</span>
+        <span style={{ color: barColor }}>
+          {cert.expired ? `Exp ${Math.abs(cert.daysRemaining)}d ago` : `${cert.daysRemaining}d left`}
         </span>
-        <span>{new Date(cert.validTo).toLocaleDateString()}</span>
+        <span>{to.toLocaleDateString()}</span>
       </div>
-      <div className="h-1.5 rounded-full" style={{ background: '#1C2333' }}>
-        <motion.div
-          className="h-full rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${pct}%` }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          style={{ background: barColor, boxShadow: `0 0 6px ${barColor}80` }}
-        />
+      <div className="telemetry-track telemetry-track--seg" style={{ height: 5, '--accent': barColor }}>
+        <motion.div className="telemetry-fill" style={{ '--accent': barColor }} initial={{ width: 0 }} animate={{ width: `${pct}%` }} transition={{ duration: 1, ease: 'easeOut' }} />
       </div>
     </div>
   );
@@ -46,115 +38,77 @@ function ValidityBar({ cert }) {
 export function TLSCard({ tls }) {
   if (!tls) return null;
   if (!tls.available) return (
-    <div className="rounded-lg p-5 card-red" style={{ background: '#0D1117' }}>
-      <div className="font-mono text-xs text-red">TLS unavailable: {tls.error || 'Could not connect'}</div>
-    </div>
+    <HUDPanel label="TLS Analysis" accent={ACCENT.red}>
+      <div className="font-mono text-xs break-words" style={{ color: '#FF3355' }}>TLS unavailable: {tls.error || 'Could not connect'}</div>
+    </HUDPanel>
   );
 
   const grade = tls.grade || 'F';
   const cfg = GRADE_CONFIG[grade] || GRADE_CONFIG.F;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="rounded-lg p-5 card-green"
-      style={{ background: '#0D1117' }}
-    >
-      <div className="flex items-start gap-4 mb-5">
-        {/* Grade badge */}
+    <HUDPanel label="TLS Analysis" meta={`GRADE ${grade}`} accent={cfg.color} delay={0.05}>
+      <div className="flex items-start gap-3 sm:gap-4 mb-4">
         <motion.div
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.5, type: 'spring' }}
-          className="flex-shrink-0 w-20 h-20 rounded-xl flex items-center justify-center font-display font-black text-4xl"
+          className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center font-display font-bold text-3xl sm:text-4xl"
           style={{
             background: cfg.bg,
-            border: `2px solid ${cfg.border}`,
+            border: `1px solid ${cfg.border}`,
             color: cfg.color,
-            boxShadow: cfg.glow
+            boxShadow: cfg.glow,
+            clipPath: 'polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px)'
           }}
         >
           {grade}
         </motion.div>
 
-        <div className="flex-1">
-          <div className="font-display font-bold text-text-primary text-sm tracking-widest uppercase mb-2">TLS Analysis</div>
-          <div className="space-y-1 font-mono text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted w-20">Protocol</span>
-              <span style={{ color: ['TLSv1.3'].includes(tls.protocol) ? '#00FF88' : '#FFB800' }}>{tls.protocol || 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted w-20">Cipher</span>
-              <span className="text-text-primary truncate max-w-48">{tls.cipher?.name || 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted w-20">Key Size</span>
-              <span className="text-text-primary">{tls.cipher?.bits ? `${tls.cipher.bits} bits` : 'Unknown'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted w-20">Trusted</span>
-              <span style={{ color: tls.authorized ? '#00FF88' : '#FF4444' }}>{tls.authorized ? '✓ Yes' : '✗ No'}</span>
-            </div>
-          </div>
+        <div className="flex-1 min-w-0 space-y-1">
+          <Readout label="Protocol" value={tls.protocol || 'Unknown'} color={tls.protocol === 'TLSv1.3' ? '#00E08A' : '#FFA31A'} />
+          <Readout label="Cipher" value={tls.cipher?.name || 'Unknown'} />
+          <Readout label="Key Size" value={tls.cipher?.bits ? `${tls.cipher.bits} bits` : 'Unknown'} />
+          <Readout label="Trusted" value={tls.authorized ? '✓ Yes' : '✗ No'} color={tls.authorized ? '#00E08A' : '#FF3355'} />
         </div>
       </div>
 
-      {/* Certificate details */}
       {tls.cert && (
         <div className="space-y-4">
-          <div className="rounded p-3 space-y-2" style={{ background: 'rgba(28,35,51,0.3)', border: '1px solid #1C2333' }}>
-            <div className="font-mono text-xs text-text-muted uppercase tracking-wider">Certificate</div>
-            <div className="font-mono text-xs space-y-1">
-              <div className="flex gap-2">
-                <span className="text-text-muted w-16">Subject</span>
-                <span className="text-text-primary">{tls.cert.subject}</span>
-              </div>
-              <div className="flex gap-2">
-                <span className="text-text-muted w-16">Issuer</span>
-                <span className="text-text-primary">{tls.cert.issuer}</span>
-              </div>
-              {tls.cert.selfSigned && (
-                <div className="flex gap-2">
-                  <span className="badge-fail text-xs px-2 py-0.5 rounded">SELF-SIGNED</span>
-                </div>
-              )}
+          <div className="p-3 space-y-2" style={{ background: 'rgba(20,36,58,0.25)', border: '1px solid #14243A' }}>
+            <div className="hud-sublabel">Certificate</div>
+            <div className="space-y-1">
+              <Readout label="Subject" value={tls.cert.subject} keyWidth="w-14 sm:w-16" />
+              <Readout label="Issuer" value={tls.cert.issuer} keyWidth="w-14 sm:w-16" />
+              {tls.cert.selfSigned && <span className="chip badge-fail">SELF-SIGNED</span>}
             </div>
             <ValidityBar cert={tls.cert} />
           </div>
 
-          {/* SAN chips */}
           {tls.cert.san?.length > 0 && (
             <div>
-              <div className="font-mono text-xs text-text-muted uppercase tracking-wider mb-2">SANs ({tls.cert.san.length})</div>
-              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto scrollable">
+              <div className="hud-sublabel mb-2">SANs · {tls.cert.san.length}</div>
+              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto scrollable pr-1">
                 {tls.cert.san.slice(0, 20).map((san, i) => (
-                  <span key={i} className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(77,159,255,0.08)', color: '#4D9FFF', border: '1px solid rgba(77,159,255,0.2)' }}>
-                    {san}
-                  </span>
+                  <span key={i} className="chip" style={{ background: 'rgba(0,229,255,0.08)', color: '#00E5FF', borderColor: 'rgba(0,229,255,0.25)' }}>{san}</span>
                 ))}
-                {tls.cert.san.length > 20 && (
-                  <span className="font-mono text-xs text-text-muted">+{tls.cert.san.length - 20} more</span>
-                )}
+                {tls.cert.san.length > 20 && <span className="chip" style={{ color: '#6B8199', borderColor: '#14243A' }}>+{tls.cert.san.length - 20}</span>}
               </div>
             </div>
           )}
 
-          {/* Findings */}
           {tls.findings?.length > 0 && (
             <div className="space-y-1">
               {tls.findings.map((f, i) => (
-                <div key={i} className="flex items-start gap-2 font-mono text-xs p-2 rounded" style={{ background: 'rgba(255,68,68,0.05)', border: '1px solid rgba(255,68,68,0.15)' }}>
-                  <span style={{ color: '#FF4444' }}>⚠</span>
-                  <span className="text-text-primary">{f.title}</span>
+                <div key={i} className="flex items-start gap-2 font-mono text-xs p-2" style={{ background: 'rgba(255,51,85,0.05)', borderLeft: '2px solid #FF3355' }}>
+                  <span style={{ color: '#FF3355' }} className="flex-shrink-0">⚠</span>
+                  <span className="text-text-primary break-words min-w-0">{f.title}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
       )}
-    </motion.div>
+    </HUDPanel>
   );
 }

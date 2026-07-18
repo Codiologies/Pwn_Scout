@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion';
+import { HUDPanel, ACCENT } from './ui/HUDPanel';
 
 const RISKY_PORTS = [21, 23, 445, 1433, 3306, 3389, 5432, 5900, 6379, 9200, 27017];
 const PORT_COLORS = {
-  critical: '#FF4444',
-  high: '#FF6432',
-  medium: '#FFB800',
+  critical: '#FF3355',
+  high: '#FF6B2C',
+  medium: '#FFA31A',
   info: '#4D9FFF'
 };
 
@@ -18,42 +19,29 @@ function riskLevel(port) {
 export function PortsCard({ ports }) {
   if (!ports) return null;
   if (ports.error) return (
-    <div className="rounded-lg p-5 card-red" style={{ background: '#0D1117' }}>
-      <div className="font-mono text-xs" style={{ color: '#FF4444' }}>Port scan error: {ports.error}</div>
-    </div>
+    <HUDPanel label="Port Sweep" accent={ACCENT.red}>
+      <div className="font-mono text-xs break-words" style={{ color: '#FF3355' }}>Port scan error: {ports.error}</div>
+    </HUDPanel>
   );
 
   const open = ports.open || [];
+  const risky = open.filter(p => RISKY_PORTS.includes(p.port)).length;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="rounded-lg p-5 card-green"
-      style={{ background: '#0D1117' }}
+    <HUDPanel
+      label="Port Sweep"
+      meta={`${open.length} open / ${ports.total}`}
+      accent={risky ? ACCENT.red : ACCENT.lime}
+      delay={0.12}
+      actions={
+        <span className="flex-shrink-0">
+          {risky > 0 && <span className="chip badge-critical">{risky} RISKY</span>}
+          {open.length === 0 && <span className="chip badge-pass">CLOSED</span>}
+        </span>
+      }
     >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <div className="font-display font-bold text-text-primary text-sm tracking-widest uppercase">Port Scan</div>
-          <div className="font-mono text-xs text-text-muted mt-0.5">
-            {open.length} open / {ports.total} scanned
-          </div>
-        </div>
-        <div className="flex gap-2">
-          {open.filter(p => RISKY_PORTS.includes(p.port)).length > 0 && (
-            <span className="font-mono text-xs px-2 py-0.5 rounded badge-critical">
-              {open.filter(p => RISKY_PORTS.includes(p.port)).length} RISKY
-            </span>
-          )}
-          {open.length === 0 && (
-            <span className="font-mono text-xs px-2 py-0.5 rounded badge-pass">ALL CLOSED</span>
-          )}
-        </div>
-      </div>
-
       {open.length === 0 ? (
-        <div className="font-mono text-xs text-text-muted text-center py-6">
+        <div className="font-mono text-xs text-center py-6" style={{ color: '#6B8199' }}>
           No open ports detected on common ports
         </div>
       ) : (
@@ -64,83 +52,48 @@ export function PortsCard({ ports }) {
             return (
               <motion.div
                 key={p.port}
-                initial={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="flex items-center gap-3 px-3 py-2 rounded font-mono text-xs"
-                style={{
-                  background: risk === 'critical' ? 'rgba(255,68,68,0.06)' : risk === 'high' ? 'rgba(255,100,50,0.06)' : 'rgba(28,35,51,0.4)',
-                  border: `1px solid ${color}30`
-                }}
+                transition={{ delay: Math.min(i * 0.04, 0.4) }}
+                className="flex items-center gap-2 sm:gap-3 px-2.5 sm:px-3 py-2 font-mono text-xs"
+                style={{ background: 'rgba(20,36,58,0.25)', borderLeft: `2px solid ${color}` }}
               >
-                {/* Port number */}
-                <span className="font-bold w-12 text-right flex-shrink-0" style={{ color }}>
-                  {p.port}
-                </span>
-
-                {/* Protocol indicator */}
-                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color }} />
-
-                {/* Service + software/version */}
-                <span className="flex-1 text-text-primary">
+                <span className="font-bold w-10 sm:w-12 text-right flex-shrink-0 count-num" style={{ color }}>{p.port}</span>
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: color, boxShadow: `0 0 6px ${color}` }} />
+                <span className="flex-1 text-text-primary min-w-0 truncate">
                   {p.service}
-                  {p.software && p.software !== p.service && (
-                    <span className="text-text-muted ml-1">{p.software}</span>
-                  )}
-                  {p.version && (
-                    <span className="ml-1 px-1 rounded text-xs" style={{ background: 'rgba(77,159,255,0.1)', color: '#4D9FFF' }}>
-                      {p.version}
-                    </span>
-                  )}
-                  {p.poweredBy && (
-                    <span className="ml-1 text-text-muted text-xs">via {p.poweredBy}</span>
-                  )}
+                  {p.software && p.software !== p.service && <span style={{ color: '#6B8199' }} className="ml-1">{p.software}</span>}
+                  {p.version && <span className="ml-1 px-1" style={{ background: 'rgba(0,229,255,0.1)', color: '#00E5FF' }}>{p.version}</span>}
+                  {p.poweredBy && <span className="ml-1 hidden sm:inline" style={{ color: '#6B8199' }}>via {p.poweredBy}</span>}
                 </span>
-
-                {/* HTTP status for web ports */}
-                {p.httpStatus && (
-                  <span className="text-text-muted text-xs hidden sm:block">{p.httpStatus}</span>
-                )}
-
-                {/* Risk badge */}
-                {risk !== 'info' && (
-                  <span
-                    className="font-mono text-xs px-1.5 py-0.5 rounded flex-shrink-0 uppercase"
-                    style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}
-                  >
-                    {risk}
-                  </span>
-                )}
+                {p.httpStatus && <span className="hidden sm:block flex-shrink-0" style={{ color: '#6B8199' }}>{p.httpStatus}</span>}
+                {risk !== 'info' && <span className="chip flex-shrink-0" style={{ background: `${color}18`, color, borderColor: `${color}40` }}>{risk}</span>}
               </motion.div>
             );
           })}
         </div>
       )}
 
-      {/* Cloud IP warning */}
       {import.meta.env.PROD && (
-        <div className="mt-3 flex items-center gap-2 font-mono text-xs px-2 py-1.5 rounded"
-          style={{ background: 'rgba(255,184,0,0.05)', border: '1px solid rgba(255,184,0,0.15)' }}>
-          <span style={{ color: '#FFB800' }}>⚠</span>
-          <span style={{ color: '#7D8590' }}>Scanned from cloud IP — target firewall may block datacenter ranges. Run locally for accurate results.</span>
+        <div className="mt-3 flex items-start gap-2 px-2.5 py-1.5" style={{ background: 'rgba(255,163,26,0.05)', border: '1px solid rgba(255,163,26,0.2)' }}>
+          <span style={{ color: '#FFA31A' }} className="flex-shrink-0">⚠</span>
+          <span className="font-mono" style={{ color: '#6B8199', fontSize: '0.66rem', lineHeight: 1.4 }}>Scanned from cloud IP — target firewall may block datacenter ranges. Run locally for accurate results.</span>
         </div>
       )}
 
-      {/* Findings */}
       {ports.findings?.filter(f => f.severity !== 'info').length > 0 && (
         <div className="mt-4 space-y-1">
           {ports.findings.filter(f => f.severity !== 'info').map((f, i) => (
-            <div key={i} className="flex items-start gap-2 font-mono text-xs p-2 rounded"
-              style={{ background: 'rgba(255,68,68,0.05)', border: '1px solid rgba(255,68,68,0.15)' }}>
-              <span style={{ color: '#FF4444' }}>⚠</span>
-              <div>
-                <div className="text-text-primary">{f.title}</div>
-                <div className="text-text-muted mt-0.5">{f.remediation}</div>
+            <div key={i} className="flex items-start gap-2 font-mono text-xs p-2" style={{ background: 'rgba(255,51,85,0.05)', borderLeft: '2px solid #FF3355' }}>
+              <span style={{ color: '#FF3355' }} className="flex-shrink-0">⚠</span>
+              <div className="min-w-0">
+                <div className="text-text-primary break-words">{f.title}</div>
+                <div className="mt-0.5 break-words" style={{ color: '#6B8199' }}>{f.remediation}</div>
               </div>
             </div>
           ))}
         </div>
       )}
-    </motion.div>
+    </HUDPanel>
   );
 }

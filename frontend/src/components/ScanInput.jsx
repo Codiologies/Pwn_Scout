@@ -6,11 +6,11 @@ const MODULES = [
   { id: 'dns',     label: 'DNS',     desc: 'Records + Subdomains' },
   { id: 'tls',     label: 'TLS',     desc: 'Cert Analysis' },
   { id: 'http',    label: 'HTTP',    desc: 'Fingerprinting' },
-  { id: 'headers', label: 'Headers', desc: 'Security Audit' },
+  { id: 'headers', label: 'HDRS',    desc: 'Security Audit' },
   { id: 'ports',   label: 'PORTS',   desc: 'Top 27 ports + service detection' }
 ];
 
-export function ScanInput({ onScan, scanning }) {
+export function ScanInput({ onScan, scanning, compact = false }) {
   const [target, setTarget] = useState('');
   const [selectedModules, setSelectedModules] = useState(['dns', 'tls', 'http', 'headers', 'ports']);
   const [focused, setFocused] = useState(false);
@@ -46,24 +46,27 @@ export function ScanInput({ onScan, scanning }) {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
+    <div className={`w-full mx-auto ${compact ? '' : 'max-w-3xl px-2 sm:px-4'}`}>
       <form onSubmit={handleSubmit}>
-        {/* Main input */}
+        {/* Command line */}
         <motion.div
-          className="relative"
-          animate={focused ? { scale: 1.01 } : { scale: 1 }}
+          className="relative hud-panel"
+          style={{
+            '--accent': '#00E5FF',
+            borderColor: focused ? 'rgba(0,229,255,0.55)' : undefined,
+            boxShadow: focused ? '0 0 0 1px rgba(0,229,255,0.25), 0 0 30px rgba(0,229,255,0.12)' : undefined
+          }}
+          animate={focused && !compact ? { scale: 1.004 } : { scale: 1 }}
           transition={{ duration: 0.15 }}
         >
-          <div
-            className="flex items-center gap-2 sm:gap-3 rounded-lg px-3 sm:px-4 py-3"
-            style={{
-              background: '#0D1117',
-              border: `1px solid ${focused ? 'rgba(0,255,136,0.5)' : '#1C2333'}`,
-              boxShadow: focused ? '0 0 0 1px rgba(0,255,136,0.2), 0 0 30px rgba(0,255,136,0.1)' : 'none',
-              transition: 'border-color 0.2s, box-shadow 0.2s'
-            }}
-          >
-            <span className="text-green font-mono text-base sm:text-lg select-none flex-shrink-0 text-glow-green">&gt;_</span>
+          {!compact && (
+            <>
+              <span className="hud-panel__bracket hud-panel__bracket--tl" />
+              <span className="hud-panel__bracket hud-panel__bracket--br" />
+            </>
+          )}
+          <div className={`flex items-center gap-2 sm:gap-3 ${compact ? 'px-2.5 py-2' : 'px-3 sm:px-4 py-3'}`}>
+            <span className="hud-sublabel flex-shrink-0" style={{ color: '#00E5FF' }}>TGT&gt;</span>
             <input
               ref={inputRef}
               type="text"
@@ -71,41 +74,34 @@ export function ScanInput({ onScan, scanning }) {
               onChange={e => setTarget(e.target.value)}
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              placeholder={`scan ${EXAMPLE_TARGETS[ghostIdx]}`}
+              placeholder={`acquire ${EXAMPLE_TARGETS[ghostIdx]}`}
               disabled={scanning}
-              className="flex-1 min-w-0 bg-transparent font-mono text-base sm:text-lg text-text-primary placeholder-text-muted/40 focus:outline-none disabled:opacity-50"
-              style={{ letterSpacing: '0.02em' }}
+              className="flex-1 min-w-0 bg-transparent font-mono text-text-primary focus:outline-none disabled:opacity-50"
+              style={{ fontSize: compact ? '0.9rem' : '1rem', letterSpacing: '0.02em' }}
               autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
               spellCheck={false}
             />
-            <div className="flex items-center gap-3 flex-shrink-0">
-              <span className="text-text-muted text-xs hidden sm:block">⌘K</span>
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-shrink-0">
+              {!compact && <span className="hud-sublabel hidden md:block" style={{ fontSize: '0.6rem' }}>⌘K</span>}
               <motion.button
                 type="submit"
                 disabled={!target.trim() || scanning}
                 whileHover={!scanning && target ? { scale: 1.02 } : {}}
                 whileTap={!scanning && target ? { scale: 0.98 } : {}}
-                className="px-3 sm:px-5 py-2 rounded font-mono font-semibold text-xs sm:text-sm tracking-wider sm:tracking-widest uppercase whitespace-nowrap disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                style={{
-                  background: scanning
-                    ? 'rgba(0,255,136,0.1)'
-                    : target
-                    ? '#FF4444'
-                    : 'rgba(255,68,68,0.2)',
-                  color: scanning ? '#00FF88' : '#fff',
-                  border: `1px solid ${scanning ? 'rgba(0,255,136,0.3)' : target ? '#FF4444' : 'rgba(255,68,68,0.3)'}`,
-                  boxShadow: target && !scanning ? '0 0 15px rgba(255,68,68,0.3)' : 'none'
-                }}
+                className={`hud-btn whitespace-nowrap ${target && !scanning ? 'hud-btn--solid' : ''} ${compact ? 'px-2.5 py-1.5 text-xs' : 'px-3 sm:px-5 py-2 text-xs sm:text-sm'}`}
+                style={{ '--accent': scanning ? '#00E5FF' : '#FF3355' }}
               >
                 {scanning ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block w-2 h-2 rounded-full bg-green animate-pulse" />
-                    SCANNING
+                  <span className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full animate-pulse" style={{ background: '#00E5FF' }} />
+                    <span className="hidden xs:inline">{compact ? 'BUSY' : 'SWEEPING'}</span>
                   </span>
                 ) : (
                   <>
-                    <span className="sm:hidden">SCAN</span>
-                    <span className="hidden sm:inline">INITIALIZE SCAN</span>
+                    <span className={compact ? '' : 'sm:hidden'}>SCAN</span>
+                    {!compact && <span className="hidden sm:inline">INITIATE SWEEP</span>}
                   </>
                 )}
               </motion.button>
@@ -113,9 +109,9 @@ export function ScanInput({ onScan, scanning }) {
           </div>
         </motion.div>
 
-        {/* Module toggles */}
-        <div className="flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 mt-3 flex-wrap">
-          <span className="text-text-muted text-xs font-mono mr-1 hidden sm:block">MODULES:</span>
+        {/* Module bank */}
+        <div className={`flex items-center flex-wrap ${compact ? 'gap-1.5 mt-2 justify-start' : 'gap-1.5 sm:gap-2 mt-3 justify-center sm:justify-start'}`}>
+          {!compact && <span className="hud-sublabel mr-1 hidden sm:block" style={{ fontSize: '0.6rem' }}>MODULES //</span>}
           {MODULES.map(mod => {
             const active = selectedModules.includes(mod.id);
             return (
@@ -125,31 +121,33 @@ export function ScanInput({ onScan, scanning }) {
                 onClick={() => toggleModule(mod.id)}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-2.5 sm:px-3 py-1 rounded text-xs font-mono transition-all"
+                className="chip"
                 style={{
-                  background: active ? 'rgba(0,255,136,0.1)' : 'rgba(28,35,51,0.5)',
-                  color: active ? '#00FF88' : '#7D8590',
-                  border: `1px solid ${active ? 'rgba(0,255,136,0.3)' : '#1C2333'}`,
-                  boxShadow: active ? '0 0 8px rgba(0,255,136,0.1)' : 'none'
+                  background: active ? 'rgba(0,229,255,0.12)' : 'rgba(20,36,58,0.4)',
+                  color: active ? '#00E5FF' : '#6B8199',
+                  borderColor: active ? 'rgba(0,229,255,0.4)' : '#14243A',
+                  boxShadow: active ? '0 0 10px rgba(0,229,255,0.15)' : 'none'
                 }}
                 title={mod.desc}
               >
+                {active && <span style={{ fontSize: '0.5rem' }}>●</span>}
                 {mod.label}
               </motion.button>
             );
           })}
-          <span className="text-text-muted/40 text-xs font-mono ml-auto hidden sm:block">
-            {selectedModules.length} / {MODULES.length} active
-          </span>
+          {!compact && (
+            <span className="hud-sublabel ml-auto hidden sm:block" style={{ fontSize: '0.6rem' }}>
+              {selectedModules.length}/{MODULES.length} ONLINE
+            </span>
+          )}
         </div>
 
-        {/* Port scan cloud warning — only in production */}
-        {import.meta.env.PROD && selectedModules.includes('ports') && (
-          <div className="mt-2 flex items-center gap-2 font-mono text-xs px-2 py-1.5 rounded"
-            style={{ background: 'rgba(255,184,0,0.05)', border: '1px solid rgba(255,184,0,0.2)' }}>
-            <span style={{ color: '#FFB800' }}>⚠</span>
-            <span style={{ color: '#7D8590' }}>
-              Port scan runs from cloud server IP — results may differ from local network scans. Firewall rules may hide open ports.
+        {/* Cloud port-scan advisory */}
+        {import.meta.env.PROD && selectedModules.includes('ports') && !compact && (
+          <div className="mt-2 flex items-start gap-2 px-2.5 py-1.5" style={{ background: 'rgba(255,163,26,0.06)', border: '1px solid rgba(255,163,26,0.25)' }}>
+            <span style={{ color: '#FFA31A' }} className="flex-shrink-0">⚠</span>
+            <span className="font-mono" style={{ color: '#6B8199', fontSize: '0.66rem', lineHeight: 1.4 }}>
+              Port sweep runs from a cloud server IP — firewall rules may hide open ports versus a local scan.
             </span>
           </div>
         )}

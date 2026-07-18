@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { isWebGPUSupported, isModelLoaded, loadModel, generateChat, generateAnalysis, MODEL_ID } from '../lib/webllm';
+import { isWebGPUSupported, isModelLoaded, loadModel, generateChat, generateAnalysis, MODEL_ID, MODELS, abortDownload, unloadModel, getLoadedModelKey } from '../lib/webllm';
 import { analyzeWithFallback, chatWithFallback } from '../lib/fallback';
 import { buildAnalysisPrompt, buildChatPrompt, buildScanContext } from '../lib/prompts';
 
@@ -19,7 +19,8 @@ export function useAI() {
     source: 'builtin',
     downloadProgress: 0,
     downloadText: '',
-    modelId: null
+    modelId: null,
+    activeModelKey: null  // 'fast' | 'smart' | null (builtin)
   });
 
   const [showConsentModal, setShowConsentModal] = useState(false);
@@ -49,7 +50,8 @@ export function useAI() {
         ...s,
         status: 'ready',
         source: 'webllm',
-        modelId: MODEL_ID,
+        modelId: MODELS[modelKey]?.id || MODEL_ID,
+        activeModelKey: modelKey,
         downloadProgress: 100
       }));
       return true;
@@ -97,6 +99,38 @@ export function useAI() {
       runAnalysisInternal(reconData, domain, false);
     }
   }, []);
+
+  const cancelDownload = useCallback(() => {
+    abortDownload();
+    localStorage.removeItem('scout_model_accepted');
+    localStorage.removeItem('scout_model_key');
+    pendingAnalysis.current = null;
+    pendingChat.current = null;
+    setAIState({ status: 'idle', source: 'builtin', downloadProgress: 0, downloadText: '', modelId: null, activeModelKey: null });
+    setAnalysisLoading(false);
+  }, []);
+
+  // Switch between models: 'fast', 'smart', or 'builtin'
+  const switchModel = useCallback(async (modelKey) => {
+    // Switch to built-in (no AI model)
+    if (modelKey === 'builtin') {
+      unloadModel();
+      localStorage.removeItem('scout_model_accepted');
+      localStorage.removeItem('scout_model_key');
+      setAIState({ status: 'declined', source: 'builtin', downloadProgress: 0, downloadText: '', modelId: null, activeModelKey: 'builtin' });
+      return;
+    }
+
+    // Already using this model
+    const currentKey = getLoadedModelKey();
+    if (currentKey === modelKey && isModelLoaded()) return;
+
+    // Unload current model first
+    unloadModel();
+
+    // Download the new model
+    await downloadModel(modelKey, false);
+  }, [downloadModel]);
 
   const runAnalysisInternal = useCallback(async (reconData, domain, useWebLLM) => {
     setAnalysisLoading(true);
@@ -214,6 +248,8 @@ export function useAI() {
     showConsentModal,
     handleConsentAccept,
     handleConsentDecline,
+    cancelDownload,
+    switchModel,
     analysis,
     analysisLoading,
     messages,

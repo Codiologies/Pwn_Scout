@@ -1,4 +1,25 @@
-import dns from 'dns/promises';
+import dns, { Resolver } from 'dns/promises';
+
+// The host's default DNS server can be a slow/flaky local proxy (e.g. 127.0.0.1
+// from a VPN, Pi-hole, or security tool). A burst of 60+ subdomain lookups
+// against it can stall a scan for minutes. Route lookups through a bounded
+// resolver that prefers fast public DNS and hard-caps each query, so dead
+// lookups fail quickly instead of dragging the whole scan. Configurable via
+// DNS_SERVERS; the system's own servers are appended as a fallback for
+// networks that block outbound public DNS.
+const DNS_SERVERS = (process.env.DNS_SERVERS || '1.1.1.1,8.8.8.8')
+  .split(',').map(s => s.trim()).filter(Boolean);
+
+function makeResolver() {
+  const r = new Resolver({ timeout: 3000, tries: 2 });
+  try {
+    const servers = [...new Set([...DNS_SERVERS, ...dns.getServers()])];
+    if (servers.length) r.setServers(servers);
+  } catch { /* keep defaults */ }
+  return r;
+}
+
+const resolver = makeResolver();
 
 const SUBDOMAINS = [
   'www','api','dev','staging','admin','vpn','mail','smtp','cdn','assets',
@@ -12,7 +33,7 @@ const SUBDOMAINS = [
 
 async function resolveRecord(domain, type) {
   try {
-    const result = await dns.resolve(domain, type);
+    const result = await resolver.resolve(domain, type);
     return { type, records: result, error: null };
   } catch (e) {
     return { type, records: [], error: e.code };
@@ -22,7 +43,7 @@ async function resolveRecord(domain, type) {
 async function checkSubdomain(subdomain, domain) {
   const fqdn = `${subdomain}.${domain}`;
   try {
-    const addrs = await dns.resolve4(fqdn);
+    const addrs = await resolver.resolve4(fqdn);
     return { subdomain: fqdn, ips: addrs, alive: true };
   } catch {
     return null;
@@ -31,13 +52,13 @@ async function checkSubdomain(subdomain, domain) {
 
 async function checkZoneTransfer(domain) {
   try {
-    const nsRecords = await dns.resolveNs(domain);
+    const nsRecords = await resolver.resolveNs(domain);
     const results = [];
     for (const ns of nsRecords.slice(0, 3)) {
       try {
         // AXFR attempt via raw resolution — Node doesn't natively support AXFR
         // We try resolving with the specific NS and catch EREFUSED/ECONNREFUSED
-        await dns.resolve(domain, 'ANY');
+        await resolver.resolve(domain, 'ANY');
         results.push({ ns, vulnerable: false, note: 'AXFR not supported via standard DNS' });
       } catch (e) {
         results.push({ ns, vulnerable: false, note: e.code });
@@ -55,7 +76,7 @@ function checkSPF(txtRecords) {
 }
 
 function checkDMARC(domain) {
-  return dns.resolve(`_dmarc.${domain}`, 'TXT')
+  return resolver.resolve(`_dmarc.${domain}`, 'TXT')
     .then(r => ({ present: true, record: r.flat().join('') }))
     .catch(() => ({ present: false, record: null }));
 }
@@ -64,7 +85,7 @@ function checkDKIM(domain) {
   const selectors = ['default','google','mail','smtp','k1','selector1','selector2'];
   return Promise.allSettled(
     selectors.map(s =>
-      dns.resolve(`${s}._domainkey.${domain}`, 'TXT')
+      resolver.resolve(`${s}._domainkey.${domain}`, 'TXT')
         .then(r => ({ selector: s, present: true, record: r.flat().join('') }))
         .catch(() => ({ selector: s, present: false }))
     )

@@ -25,6 +25,7 @@ function getEngine() { return window.__scout_engine__ || null; }
 function setEngine(e) { window.__scout_engine__ = e; }
 
 let loadingPromise = null;
+let currentWorker = null;
 
 const SYSTEM_PROMPT = `You are Scout AI, a penetration testing assistant for authorized security assessments. You analyze real scan data and answer questions about the target.
 
@@ -71,6 +72,7 @@ export async function loadModel(onProgress, modelKey = 'smart') {
       new URL('./llm.worker.js', import.meta.url),
       { type: 'module' }
     );
+    currentWorker = worker;
 
     const engine = await CreateWebWorkerMLCEngine(worker, modelId, {
       initProgressCallback: (report) => {
@@ -83,12 +85,22 @@ export async function loadModel(onProgress, modelKey = 'smart') {
     });
 
     setEngine(engine);
+    currentWorker = null;
     window.__scout_model_key__ = modelKey;
     loadingPromise = null;
     return engine;
   })();
 
   return loadingPromise;
+}
+
+export function abortDownload() {
+  if (currentWorker) {
+    currentWorker.terminate();
+    currentWorker = null;
+  }
+  setEngine(null);
+  loadingPromise = null;
 }
 
 export function getLoadedModelKey() {
@@ -149,4 +161,10 @@ export async function generateAnalysis(prompt, onChunk) {
 export function unloadModel() {
   getEngine()?.unload?.();
   setEngine(null);
+  if (currentWorker) {
+    currentWorker.terminate();
+    currentWorker = null;
+  }
+  window.__scout_model_key__ = null;
+  loadingPromise = null;
 }

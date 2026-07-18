@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { HUDPanel, Readout, ACCENT } from './ui/HUDPanel';
 import { RiskCard } from './RiskCard';
 import { DNSCard } from './DNSCard';
 import { TLSCard } from './TLSCard';
@@ -11,71 +12,42 @@ function HTTPCard({ http }) {
   if (!http) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.05 }}
-      className="rounded-lg p-5 card-green"
-      style={{ background: '#0D1117' }}
-    >
-      <div className="font-display font-bold text-text-primary text-sm tracking-widest uppercase mb-4">HTTP Fingerprint</div>
-
-      <div className="grid grid-cols-2 gap-3 mb-4">
-        {[['HTTP', http.http], ['HTTPS', http.https]].map(([proto, d]) => (
-          <div key={proto} className="p-3 rounded" style={{ background: 'rgba(28,35,51,0.3)', border: '1px solid #1C2333' }}>
-            <div className="font-mono text-xs text-text-muted mb-1">{proto}</div>
-            <div className="font-mono text-sm font-bold" style={{ color: d?.status < 400 ? '#00FF88' : '#FF4444' }}>
-              {d?.status || '—'}
+    <HUDPanel label="HTTP Fingerprint" accent={ACCENT.cyan} delay={0.05}>
+      <div className="grid grid-cols-2 gap-2.5 mb-4">
+        {[['HTTP', http.http], ['HTTPS', http.https]].map(([proto, d]) => {
+          const ok = d?.status < 400;
+          const c = ok ? '#00E08A' : '#FF3355';
+          return (
+            <div key={proto} className="p-3" style={{ background: 'rgba(20,36,58,0.25)', borderLeft: `2px solid ${c}` }}>
+              <div className="hud-sublabel mb-1" style={{ fontSize: '0.58rem' }}>{proto}</div>
+              <div className="font-mono text-lg font-bold count-num" style={{ color: c }}>{d?.status || '—'}</div>
+              <div className="font-mono text-xs" style={{ color: '#6B8199' }}>{d?.responseTime}ms</div>
             </div>
-            <div className="font-mono text-xs text-text-muted">{d?.responseTime}ms</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="space-y-2 font-mono text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-text-muted w-24">HTTPS Redirect</span>
-          <span style={{ color: http.httpsRedirect ? '#00FF88' : '#FF4444' }}>{http.httpsRedirect ? '✓ Yes' : '✗ No'}</span>
-        </div>
-        {http.waf && (
-          <div className="flex items-center gap-2">
-            <span className="text-text-muted w-24">WAF</span>
-            <span className="px-2 py-0.5 rounded capitalize" style={{ background: 'rgba(77,159,255,0.1)', color: '#4D9FFF', border: '1px solid rgba(77,159,255,0.2)' }}>{http.waf}</span>
-          </div>
-        )}
-        {http.server && (
-          <div className="flex items-center gap-2">
-            <span className="text-text-muted w-24">Server</span>
-            <span className="text-text-primary">{http.server}</span>
-          </div>
-        )}
-        {http.poweredBy && (
-          <div className="flex items-center gap-2">
-            <span className="text-text-muted w-24">Powered By</span>
-            <span style={{ color: '#FFB800' }}>{http.poweredBy}</span>
-          </div>
-        )}
-        <div className="flex items-center gap-2">
-          <span className="text-text-muted w-24">Open Redirect</span>
-          <span style={{ color: http.openRedirect?.vulnerable ? '#FF4444' : '#00FF88' }}>
-            {http.openRedirect?.vulnerable ? '⚠ Vulnerable' : '✓ Not detected'}
-          </span>
-        </div>
+      <div className="space-y-1.5">
+        <Readout label="HTTPS Redirect" value={http.httpsRedirect ? '✓ Enforced' : '✗ Missing'} color={http.httpsRedirect ? '#00E08A' : '#FF3355'} />
+        {http.waf && <Readout label="WAF" value={http.waf} color="#4D9FFF" />}
+        {http.server && <Readout label="Server" value={http.server} />}
+        {http.poweredBy && <Readout label="Powered By" value={http.poweredBy} color="#FFA31A" />}
+        <Readout label="Open Redirect" value={http.openRedirect?.vulnerable ? '⚠ Vulnerable' : '✓ Not detected'} color={http.openRedirect?.vulnerable ? '#FF3355' : '#00E08A'} />
       </div>
 
       {http.techStack?.length > 0 && (
-        <div className="mt-3">
-          <div className="font-mono text-xs text-text-muted mb-2 uppercase tracking-wider">Tech Stack</div>
+        <div className="mt-4">
+          <div className="hud-sublabel mb-2">Tech Stack</div>
           <div className="flex flex-wrap gap-1.5">
             {http.techStack.map((t, i) => (
-              <span key={i} className="font-mono text-xs px-2 py-0.5 rounded" style={{ background: 'rgba(28,35,51,0.6)', color: '#E6EDF3', border: '1px solid #1C2333' }}>
+              <span key={i} className="chip" style={{ background: 'rgba(20,36,58,0.5)', color: '#DCE9F5', borderColor: '#1E3A5C' }}>
                 {t.name}
               </span>
             ))}
           </div>
         </div>
       )}
-    </motion.div>
+    </HUDPanel>
   );
 }
 
@@ -85,52 +57,47 @@ export function ResultGrid({ result, onAIAnalyze }) {
   const { modules, risk, domain } = result;
 
   return (
-    <div className="w-full h-full scrollable px-4 py-4 space-y-4 pb-2">
-      {/* Domain header + AI button */}
+    <div className="w-full h-full scrollable px-3 sm:px-4 py-3 sm:py-4 space-y-4 pb-6">
+      {/* Ops header */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
         className="flex items-center justify-between gap-3 flex-wrap"
       >
-        <div className="min-w-0">
-          <h2 className="font-display font-bold text-xl text-text-primary break-all">{domain}</h2>
-          <div className="font-mono text-xs text-text-muted">Scan complete · {new Date(result.timestamp).toLocaleTimeString()}</div>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="hud-panel__led flex-shrink-0" style={{ '--accent': '#00E08A' }} />
+          <div className="min-w-0">
+            <h2 className="stencil text-base sm:text-lg text-text-primary break-all">{domain}</h2>
+            <div className="hud-sublabel" style={{ fontSize: '0.58rem' }}>
+              SWEEP COMPLETE · {new Date(result.timestamp).toLocaleTimeString('en-GB', { hour12: false })}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => exportPDF(result)}
-            className="px-4 py-2 rounded font-mono text-xs font-semibold tracking-widest transition-all"
-            style={{
-              background: 'rgba(77,159,255,0.08)',
-              color: '#4D9FFF',
-              border: '1px solid rgba(77,159,255,0.25)'
-            }}
+            className="hud-btn px-3 py-2 text-xs"
+            style={{ '--accent': '#4D9FFF', color: '#4D9FFF' }}
           >
-            ↓ EXPORT PDF
+            ↓ <span className="hidden xs:inline">EXPORT</span>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => onAIAnalyze(modules, domain)}
-            className="px-4 py-2 rounded font-mono text-xs font-semibold tracking-widest transition-all"
-            style={{
-              background: 'rgba(0,255,136,0.08)',
-              color: '#00FF88',
-              border: '1px solid rgba(0,255,136,0.25)',
-              boxShadow: '0 0 15px rgba(0,255,136,0.06)'
-            }}
+            className="hud-btn hud-btn--solid px-3 py-2 text-xs"
+            style={{ '--accent': '#00E08A' }}
           >
-            ◈ AI ANALYZE
+            ◈ <span className="hidden xs:inline">AI ANALYZE</span><span className="xs:hidden">AI</span>
           </motion.button>
         </div>
       </motion.div>
 
-      {/* Two-column layout: left = data cards, right = risk (stacks on mobile) */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* Left column */}
-        <div className="space-y-4 min-w-0">
+      {/* Console grid — stacks on mobile, risk shown first */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="space-y-4 min-w-0 order-last lg:order-none">
           {modules.dns && <DNSCard dns={modules.dns} />}
           {modules.dns?.subdomains?.length > 0 && <SubdomainCard dns={modules.dns} />}
           {modules.tls && <TLSCard tls={modules.tls} />}
@@ -139,7 +106,6 @@ export function ResultGrid({ result, onAIAnalyze }) {
           {modules.ports && <PortsCard ports={modules.ports} />}
         </div>
 
-        {/* Right column — Risk score (sticky on desktop, shown first on mobile) */}
         <div className="order-first lg:order-none">
           <div className="lg:sticky lg:top-0">
             <RiskCard risk={risk} />
