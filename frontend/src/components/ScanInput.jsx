@@ -146,7 +146,7 @@ export function ScanInput({ onScan, scanning, compact = false }) {
         {import.meta.env.PROD && selectedModules.includes('ports') && !compact && (
           <div className="mt-2 flex items-start gap-2 px-2.5 py-1.5" style={{ background: 'rgba(255,163,26,0.06)', border: '1px solid rgba(255,163,26,0.25)' }}>
             <span style={{ color: '#FFA31A' }} className="flex-shrink-0">⚠</span>
-            <span className="font-mono" style={{ color: '#6B8199', fontSize: '0.66rem', lineHeight: 1.4 }}>
+            <span className="font-mono uppercase" style={{ color: '#6B8199', fontSize: '0.66rem', lineHeight: 1.4, letterSpacing: '0.03em' }}>
               Port sweep runs from a cloud server IP — firewall rules may hide open ports versus a local scan.
             </span>
           </div>

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { isWebGPUSupported } from '../lib/webllm.js';
 
 function MarkdownText({ text }) {
   if (!text) return null;
@@ -107,11 +108,12 @@ function DownloadProgress({ progress, text, onCancel }) {
 function ModelSwitcher({ aiState, onSwitch, disabled }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const gpuSupported = isWebGPUSupported();
 
   const options = [
-    { key: 'fast', label: '0.6B Fast', color: '#00E5FF', icon: '⚡' },
-    { key: 'smart', label: '1.7B Smart', color: '#4D9FFF', icon: '🧠' },
-    { key: 'builtin', label: 'Built-in', color: '#FFA31A', icon: '⚙' },
+    { key: 'fast', label: '0.6B FAST', color: '#00E5FF', icon: '⚡', needsGPU: true },
+    { key: 'smart', label: '1.7B SMART', color: '#4D9FFF', icon: '🧠', needsGPU: true },
+    { key: 'builtin', label: 'BUILT-IN', color: '#FFA31A', icon: '⚙', needsGPU: false },
   ];
 
   const currentKey = aiState.activeModelKey || (aiState.source === 'builtin' ? 'builtin' : null);
@@ -151,7 +153,7 @@ function ModelSwitcher({ aiState, onSwitch, disabled }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 top-full mt-1 z-50 min-w-[160px]"
+            className="absolute right-0 top-full mt-1 z-50 min-w-[180px]"
             style={{
               background: 'rgba(10,18,28,0.98)',
               border: '1px solid #1E3A5C',
@@ -160,25 +162,29 @@ function ModelSwitcher({ aiState, onSwitch, disabled }) {
           >
             {options.map(opt => {
               const isActive = opt.key === currentKey;
+              const isDisabled = opt.needsGPU && !gpuSupported;
               return (
                 <button
                   key={opt.key}
                   onClick={() => {
+                    if (isDisabled) return;
                     if (!isActive) onSwitch(opt.key);
                     setDropdownOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 px-3 py-2 font-mono text-xs text-left transition-all"
+                  disabled={isDisabled}
+                  className="w-full flex items-center gap-2 px-3 py-2 font-mono text-xs text-left transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                   style={{
                     background: isActive ? `${opt.color}12` : 'transparent',
-                    color: isActive ? opt.color : '#6B8199',
+                    color: isActive ? opt.color : isDisabled ? '#3a4a5c' : '#6B8199',
                     borderLeft: isActive ? `2px solid ${opt.color}` : '2px solid transparent',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = `${opt.color}12`; }}
-                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  onMouseEnter={e => { if (!isDisabled) e.currentTarget.style.background = `${opt.color}12`; }}
+                  onMouseLeave={e => { if (!isActive && !isDisabled) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <span>{opt.icon}</span>
                   <span>{opt.label}</span>
-                  {isActive && <span style={{ color: opt.color, marginLeft: 'auto' }}>✓</span>}
+                  {isDisabled && <span style={{ color: '#FF3355', marginLeft: 'auto', fontSize: '0.55rem' }}>NO WEBGPU</span>}
+                  {isActive && !isDisabled && <span style={{ color: opt.color, marginLeft: 'auto' }}>✓</span>}
                 </button>
               );
             })}
