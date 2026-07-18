@@ -42,7 +42,8 @@ Keep responses under 150 words. Be direct and technical. Write numbered steps as
 export { MODEL_ID, MODEL_SIZE };
 
 export function isWebGPUSupported() {
-  return typeof navigator !== 'undefined' && 'gpu' in navigator;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return typeof navigator !== 'undefined' && 'gpu' in navigator && !isMobile;
 }
 
 export function isSafari() {
